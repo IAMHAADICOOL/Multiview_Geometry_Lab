@@ -47,12 +47,15 @@ def Section5():
         fig.suptitle(f"Homography between images #0 and #{i}")
 
         for j, model in enumerate(["Translation","Similarity","Affine","Projective"]):
-            H12 = compute_homography_ransac(CL1uv, CL2uv, model)
             
-            # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
-            r, c = j//2, j%2
-            show_warped_images(ax[r,c], img1, img2, H12)
-            ax[r,c].set_title(model)            
+            H12 = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
+            if H12 is not None:
+                print(f"This is the model {model}")
+                print(f"This is the shape of H12 for model {model}: {H12.shape}")
+                # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
+                r, c = j//2, j%2
+                show_warped_images(ax[r,c], img1, img2, H12)
+                ax[r,c].set_title(model)            
 
         plt.show()
 
@@ -80,12 +83,13 @@ def Section5():
     for i, model in enumerate(["Translation","Similarity","Affine","Projective"]):
 
         # Compute Homography matrix 
-        H12 = compute_homography_ransac(CL1uv, CL2uv, model)
-
-        # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
-        r, c = i//2, i%2
-        show_warped_images(ax[r,c], img1, img2, H12)
-        ax[r,c].set_title(model) 
+        H12 = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
+        if H12 is not None:
+            print(f"This is the shape of H12 for model {model}: {H12.shape}")
+            # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
+            r, c = i//2, i%2
+            show_warped_images(ax[r,c], img1, img2, H12)
+            ax[r,c].set_title(model) 
 
     plt.show()
 

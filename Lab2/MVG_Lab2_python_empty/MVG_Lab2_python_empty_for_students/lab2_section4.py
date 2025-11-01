@@ -31,7 +31,7 @@ def Section4():
     # Retrieve the first image and its set of point features 
     img1 = images[0,:,:]
     CL1uv = features[0,:,:]
-
+    # print(f"This is the shape of img1 and CL1uv {img1.shape} and {CL1uv.shape}")
     for i in range(1, len(features)):
             
         img2 = images[i,:,:]
@@ -47,7 +47,7 @@ def Section4():
         fig.suptitle(f"Homography between images #0 and #{i}")
 
         for j, model in enumerate(["Translation","Similarity","Affine","Projective"]):
-            H12 = compute_homography(CL1uv, CL2uv, model)
+            H12 = compute_homography(img1, img2, CL1uv, CL2uv, model)
             
             # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
             r, c = j//2, j%2
@@ -80,7 +80,7 @@ def Section4():
     for i, model in enumerate(["Translation","Similarity","Affine","Projective"]):
 
         # Compute Homography matrix 
-        H12 = compute_homography(CL1uv, CL2uv, model)
+        H12 = compute_homography(img1, img2, CL1uv, CL2uv, model)
 
         # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
         r, c = i//2, i%2
