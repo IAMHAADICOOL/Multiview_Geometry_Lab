@@ -143,7 +143,7 @@ def compute_homography_ransac(img1, img2, CL1uv, CL2uv, model):
 
         else:
             # Compute the consesus related to estimated H
-            errors = projection_error(H, CL1uv, CL2uv)
+            errors = projection_error(H, CL1uv[rand_pt_indices], CL2uv[rand_pt_indices])
             inlier_indxs = np.where(errors < t)[0]
             consensus_percent = len(inlier_indxs) / num_matches
             # Update best Homography found
