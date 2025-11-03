@@ -124,7 +124,7 @@ def compute_homography_ransac(img1, img2, CL1uv, CL2uv, model):
     
     best_inlier_idxs = None 
     best_consensus_percent = 0.0
-
+    inlier_indxs = []
     # Calculate the number of iterations according to the current number of estimated outliers and the target outlier percentage.
     num_iter = abs((log(1-p)) / (log(1-(1-outlier_percent)**(num_samples)) + 1e-6))
 
@@ -135,19 +135,26 @@ def compute_homography_ransac(img1, img2, CL1uv, CL2uv, model):
         rand_pt_indices = np.random.choice(num_matches, num_samples, replace=False) 
 
         # Estimate the Homography with the selected points
-        H = compute_homography(img1, img2, CL1uv[rand_pt_indices], CL2uv[rand_pt_indices], model)
+        H21 = compute_homography(img1, img2, CL1uv[rand_pt_indices], CL2uv[rand_pt_indices], model)
 
-        if np.any(np.isnan(H)):
+        if np.any(np.isnan(H21)):
             #If there are problems with H estimation the consensus is valued as null
             consensus_percent = None
 
         else:
             # Compute the consesus related to estimated H
-            errors = projection_error(H, CL1uv[rand_pt_indices], CL2uv[rand_pt_indices])
-            inlier_indxs = np.where(errors < t)[0]
+            # errors = projection_error(H, CL1uv, CL2uv)
+            # inlier_indxs = np.where(errors < t)[0]
+            error_vec = projection_error(H21, CL2uv, CL1uv)
+            # print(f"This mean error {np.mean(error_vec)} for model {model}")
+            for i in range(len(error_vec)):
+                if error_vec[i] < t:
+                    inlier_indxs.append(i)
+            # print(f"This is type of inlier_indxs {type(inlier_indxs)}")
+            # print(f"This is shape of inlier_indxs {inlier_indxs.shape}")
             consensus_percent = len(inlier_indxs) / num_matches
             # Update best Homography found
-            if consensus_percent > best_consensus_percent:
+            if consensus_percent >= best_consensus_percent:
                 best_inlier_idxs = inlier_indxs
                 best_consensus_percent = consensus_percent
 
@@ -156,8 +163,9 @@ def compute_homography_ransac(img1, img2, CL1uv, CL2uv, model):
             break
 
     # Estimate the Homography with the best inliers 
-    inliers1uv = CL1uv[best_inlier_idxs].reshape(-1,2)
-    inliers2uv = CL2uv[best_inlier_idxs].reshape(-1,2)
-    H_best = compute_homography(img1, img2, inliers1uv, inliers2uv, model)
-    
+    inliers1uv = CL1uv[best_inlier_idxs]
+    inliers2uv = CL2uv[best_inlier_idxs]
+    H_best = compute_homography(img1, img2, CL1uv[best_inlier_idxs], CL2uv[best_inlier_idxs], model)
+    # print(f'This is the shape of CL1uv {CL1uv.shape} and type of CL1uv {type(CL1uv)}')
+    # print(f'This is the shape of CL1uv[best_inlier_idxs] {CL1uv[best_inlier_idxs].shape} and type of CL1uv {type(CL1uv[best_inlier_idxs])}')
     return H_best, inliers1uv, inliers2uv

@@ -7,7 +7,7 @@ import numpy as np
 from src.internal.match_sift import match_sift, draw_matches_opencv
 from src.internal.show_warped_images import show_warped_images
 from src.compute_homography_ransac import compute_homography_ransac
-
+from src.projection_error import projection_error
 def Section5():
 
     ############## LOAD DATA ################
@@ -48,17 +48,19 @@ def Section5():
 
         for j, model in enumerate(["Translation","Similarity","Affine","Projective"]):
 
-            H12, inliers1uv, inliers2uv = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
+            H21, inliers1uv, inliers2uv = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
             print(f"Model: {model}, Inliers found: {inliers1uv.shape[0]}")
+            error_vec = projection_error(H21,inliers2uv,inliers1uv)
+            print(f"error_vec_{model}:", np.mean(error_vec))
             # H12 = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
-        
-            if H12 is not None:
+
+            if H21 is not None:
                 # print(f"This is the model {model}")
                 # print(f"Computed Homography H12:\n{H12}\n")
                 # print(f"This is the shape of H12 for model {model}: {H12.shape}")
                 # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
                 r, c = j//2, j%2
-                show_warped_images(ax[r,c], img1, img2, H12)
+                show_warped_images(ax[r,c], img1, img2, H21)
                 ax[r,c].set_title(model)            
 
         plt.show()
@@ -87,18 +89,33 @@ def Section5():
     for i, model in enumerate(["Translation","Similarity","Affine","Projective"]):
 
         # Compute Homography matrix 
-        H12, inliers1uv, inliers2uv = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
+        H21, inliers1uv, inliers2uv = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
+        # print(f"Model: {model}, Inliers found: {inliers1uv.shape[0]}")
+        error_vec = projection_error(H21,inliers2uv,inliers1uv)
         print(f"Model: {model}, Inliers found: {inliers1uv.shape[0]}")
+        print(f"error_vec_{model}:", np.mean(error_vec))
         # H12 = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
         # if H12 is not None:
-        if H12 is not None:
+        if H21 is not None:
             # print(f"This is the shape of H12 for model {model}: {H12.shape}")
             # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
             r, c = i//2, i%2
-            show_warped_images(ax[r,c], img1, img2, H12)
+            show_warped_images(ax[r,c], img1, img2, H21)
             ax[r,c].set_title(model) 
-
     plt.show()
+    plt.figure(figsize=(10,5))
+    plt.title(f"Matches between images {img1_name} and {img2_name}")
+    draw_matches_opencv(img1, img2, inliers1uv, inliers2uv)
+    plt.show()
+    H21, inliers1uv, inliers2uv = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
+    if H21 is not None:
+        # print("Inside last if")
+        # print(f"This is the shape of H12 for model {model}: {H12.shape}")
+        # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
+        r, c = i//2, i%2
+        show_warped_images(ax[r,c], img1, img2, H21)
+        ax[r,c].set_title(model)
+        plt.show()
 
 if __name__ == '__main__':
     Section5()

@@ -7,7 +7,7 @@ import numpy as np
 from src.internal.match_sift import match_sift, draw_matches_opencv
 from src.internal.show_warped_images import show_warped_images
 from src.compute_homography import compute_homography
-
+from src.projection_error import projection_error
 def Section4():
 
     ############## LOAD DATA ################
@@ -48,7 +48,8 @@ def Section4():
 
         for j, model in enumerate(["Translation","Similarity","Affine","Projective"]):
             H12 = compute_homography(img1, img2, CL1uv, CL2uv, model)
-            
+            error_vec = projection_error(H12,CL2uv,CL1uv)
+            print(f"error_vec_{model}:", np.mean(error_vec))
             # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
             r, c = j//2, j%2
             show_warped_images(ax[r,c], img1, img2, H12)
