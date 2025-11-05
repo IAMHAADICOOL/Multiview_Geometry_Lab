@@ -107,15 +107,7 @@ def Section5():
     plt.title(f"Matches between images {img1_name} and {img2_name}")
     draw_matches_opencv(img1, img2, inliers1uv, inliers2uv)
     plt.show()
-    H21, inliers1uv, inliers2uv = compute_homography_ransac(img1, img2, CL1uv, CL2uv, model)
-    if H21 is not None:
-        # print("Inside last if")
-        # print(f"This is the shape of H12 for model {model}: {H12.shape}")
-        # This is a fuction that warps image I2 into the frame of image I1 and shows the result with red and green colors
-        r, c = i//2, i%2
-        show_warped_images(ax[r,c], img1, img2, H21)
-        ax[r,c].set_title(model)
-        plt.show()
+        
 
 if __name__ == '__main__':
     Section5()
