@@ -49,19 +49,20 @@ def eight_point_fundamental(pts1, pts2, enforce_rank2_flag, normalize=True):
                   v2*u1, v2*v1, v2*w1,
                   w2*u1, w2*v1, w2*w1])
     X = np.asarray(X)
-
+    if normalize:
+        condition_number = np.linalg.cond(X)
+        print("Condition number of normalized design matrix X:", condition_number)
+    else:
+        condition_number = np.linalg.cond(X)
+        print("Condition number of unnormalized design matrix X:", condition_number)
     # Solve Af = 0 via SVD of X
     U, S, Vt = np.linalg.svd(X, full_matrices=False)
     F_n = Vt[-1].reshape(3, 3)
 
 
-    # epipole_right = U[:, -1]
-    # epipole_left = Vt[-1, :]
-
-    # epipole_right = epipole_right / epipole_right[-1]
-    # epipole_left = epipole_left / epipole_left[-1]
     # Enforce rank-2
     if enforce_rank2_flag:
+        print("Enforcing rank 2 on F")
         F_n = enforce_rank2(F_n)
 
     # Denormalize

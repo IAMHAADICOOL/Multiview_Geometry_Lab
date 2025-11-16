@@ -51,23 +51,39 @@ def main():
     # Attention: This is an invented matrix just to have some input for the drawing functions. You have to compute it properly
     F = np.linalg.inv(K2).T @ wR2c.T @ t12_x @ np.linalg.inv(K1)
     F /= F[2, 2]
+    rank_F_analytical = np.linalg.matrix_rank(F)
     print("Step 4: Analytically obtained F:\n", F)
-
+    print("Rank of analytical F:", rank_F_analytical)
     # Step 5 - 3D points
     V = np.array([[100,300,500,700,900,100,300,500,700,900,100,300,500,700,900,100,300,500,700,900],
                   [-400,-400,-400,-400,-400,-40,-40,-40,-40,-40,40,40,40,40,40,400,400,400,400,400],
                   [2000,3000,4000,2000,3000,4000,2000,3000,4000,2000,3000,4000,2000,3000,4000,2000,3000,4000,2000,3000]], float)
 
     # Step 6 - Projection and visualization
+    # CLEAN PROJECTED POINTS TO IMAGE PLANES
     cam1_p2d = project_points_to_image_plane(V, P1)
     cam2_p2d = project_points_to_image_plane(V, P2)
     
+    # NOISY PROJECTED POINTS TO IMAGE PLANES
+    noise = np.random.normal(0, 0.5, cam1_p2d.shape)
+    cam1_p2d_noisy = cam1_p2d + noise
+    noise = np.random.normal(0, 0.5, cam2_p2d.shape)
+    cam2_p2d_noisy = cam2_p2d + noise
+
+
+    # Use noisy points for further computations
+    # cam1_p2d = cam1_p2d_noisy
+    # cam2_p2d = cam2_p2d_noisy
+
+
 
     # print("This is type of cam1_p2d:", type(cam1_p2d))
     # print("This is shape of cam1_p2d:", cam1_p2d.shape)
     
-    F_computed = eight_point_fundamental(cam1_p2d, cam2_p2d, enforce_rank2_flag=False, normalize=False)
+    F_computed = eight_point_fundamental(cam1_p2d, cam2_p2d, enforce_rank2_flag=True, normalize=False)
+    rank_F_computed = np.linalg.matrix_rank(F_computed)
     print("Step 7: Computed F using 8-point algorithm:\n", F_computed)
+    print("Step 6: Rank of computed F:", rank_F_computed)
     fro_norm = np.linalg.norm(F - F_computed, 'fro')
     print("Step 8: Frobenius norm between analytical and computed F:", fro_norm)
     
@@ -110,7 +126,78 @@ def main():
     print("Epipole in image 1 (left):", ep1_svd)
     print("Epipole in image 2 (right):", ep2_svd)
     plt.show()
-    exit()
+
+
+
+
+
+      # ===== STEP 14: Repeated Experiments & Scatter Plot =====
+    print("\n" + "="*60)
+    print("STEP 14: 100 ITERATIONS WITH SCATTER PLOT")
+    print("="*60)
+    
+    num_iterations = 100
+    ep1_without_norm = []
+    ep2_without_norm = []
+    ep1_with_norm = []
+    ep2_with_norm = []
+    
+    for i in range(num_iterations):
+        # Generate noisy points
+        noise_w = np.random.normal(0, 1.0, cam1_p2d.shape)
+        cam1_noisy = cam1_p2d + noise_w
+        noise_w = np.random.normal(0, 1.0, cam2_p2d.shape)
+        cam2_noisy = cam2_p2d + noise_w
+        
+        # Without normalization
+        F_no_norm = eight_point_fundamental(cam1_noisy, cam2_noisy, enforce_rank2_flag=True, normalize=False)
+        ep1_no, ep2_no = compute_epipoles_from_F_svd(F_no_norm)
+        ep1_without_norm.append(ep1_no)
+        ep2_without_norm.append(ep2_no)
+        
+        # With normalization
+        F_with_norm = eight_point_fundamental(cam1_noisy, cam2_noisy, enforce_rank2_flag=True, normalize=True)
+        ep1_norm, ep2_norm = compute_epipoles_from_F_svd(F_with_norm)
+        ep1_with_norm.append(ep1_norm)
+        ep2_with_norm.append(ep2_norm)
+        
+        if (i + 1) % 20 == 0:
+            print(f"  Completed {i + 1}/{num_iterations} iterations")
+    
+    # Convert to arrays
+    ep1_without_norm = np.array(ep1_without_norm)
+    ep2_without_norm = np.array(ep2_without_norm)
+    ep1_with_norm = np.array(ep1_with_norm)
+    ep2_with_norm = np.array(ep2_with_norm)
+    
+    # Create scatter plots
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    
+    # Image 1 epipoles
+    axes[0].scatter(ep1_without_norm[:, 0], ep1_without_norm[:, 1], 
+                   alpha=0.5, s=30, label='Without normalization', color='red')
+    axes[0].scatter(ep1_with_norm[:, 0], ep1_with_norm[:, 1], 
+                   alpha=0.5, s=30, label='With normalization', color='blue')
+    axes[0].set_xlabel('u coordinate')
+    axes[0].set_ylabel('v coordinate')
+    axes[0].set_title('Epipole Locations in Image 1 (100 iterations)')
+    axes[0].legend()
+    axes[0].grid(True, alpha=0.3)
+    
+    # Image 2 epipoles
+    axes[1].scatter(ep2_without_norm[:, 0], ep2_without_norm[:, 1], 
+                   alpha=0.5, s=30, label='Without normalization', color='red')
+    axes[1].scatter(ep2_with_norm[:, 0], ep2_with_norm[:, 1], 
+                   alpha=0.5, s=30, label='With normalization', color='blue')
+    axes[1].set_xlabel('u coordinate')
+    axes[1].set_ylabel('v coordinate')
+    axes[1].set_title('Epipole Locations in Image 2 (100 iterations)')
+    axes[1].legend()
+    axes[1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.show()
+
     
 
     
