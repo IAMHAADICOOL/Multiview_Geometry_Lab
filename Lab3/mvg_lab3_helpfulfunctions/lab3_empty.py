@@ -65,12 +65,17 @@ def main():
     cam2_p2d = project_points_to_image_plane(V, P2)
     
     # NOISY PROJECTED POINTS TO IMAGE PLANES
-    noise = np.random.normal(0, 0.5, cam1_p2d.shape)
+    # For visualising step 10
+    # noise = np.random.normal(0, 0.5, cam1_p2d.shape)
+    # cam1_p2d_noisy = cam1_p2d + noise
+    # noise = np.random.normal(0, 0.5, cam2_p2d.shape)
+    # cam2_p2d_noisy = cam2_p2d + noise
+
+    # For visualsiing Step 12
+    noise = np.random.normal(0, 1, cam1_p2d.shape)
     cam1_p2d_noisy = cam1_p2d + noise
-    noise = np.random.normal(0, 0.5, cam2_p2d.shape)
+    noise = np.random.normal(0, 1, cam2_p2d.shape)
     cam2_p2d_noisy = cam2_p2d + noise
-
-
     # Use noisy points for further computations
     # cam1_p2d = cam1_p2d_noisy
     # cam2_p2d = cam2_p2d_noisy
@@ -80,7 +85,12 @@ def main():
     # print("This is type of cam1_p2d:", type(cam1_p2d))
     # print("This is shape of cam1_p2d:", cam1_p2d.shape)
     
-    F_computed = eight_point_fundamental(cam1_p2d, cam2_p2d, enforce_rank2_flag=True, normalize=False)
+    # For visualising without noisy points
+    # F_computed = eight_point_fundamental(cam1_p2d, cam2_p2d, enforce_rank2_flag=False, normalize=False)
+    
+    # For visualising with noisy points, comment out the above line of code and uncomment out the following line of code
+    F_computed = eight_point_fundamental(cam1_p2d_noisy, cam2_p2d_noisy, enforce_rank2_flag=True, normalize=True)
+    print("The condition number of computed F is ",np.linalg.cond(F_computed))
     rank_F_computed = np.linalg.matrix_rank(F_computed)
     print("Step 7: Computed F using 8-point algorithm:\n", F_computed)
     print("Step 6: Rank of computed F:", rank_F_computed)
@@ -88,10 +98,10 @@ def main():
     print("Step 8: Frobenius norm between analytical and computed F:", fro_norm)
     
     # Method 1: From SVD of F
-    ep1_svd, ep2_svd = compute_epipoles_from_F_svd(F)
+    ep1_svd, ep2_svd = compute_epipoles_from_F_svd(F_computed)
 
     # Method 2: From intersecting epipolar lines
-    ep1_lines, ep2_lines = compute_epipoles_from_epipolar_lines(cam1_p2d, cam2_p2d, F)
+    ep1_lines, ep2_lines = compute_epipoles_from_epipolar_lines(cam1_p2d, cam2_p2d, F_computed)
 
     # Method 3: From camera centers (if you have P1, P2)
     ep1_cam, ep2_cam = compute_epipoles_from_camera_centers(P1, P2)
@@ -118,7 +128,7 @@ def main():
     # For image 2
     ax2.set_xlim(min(0, ep2_svd[0] - 50), max(image_size[0], ep2_svd[0] + 50))
     ax2.set_ylim(min(0, ep2_svd[1] - 50), max(image_size[1], ep2_svd[1] + 50))
-    _, _, c1, c2 = compute_epipolar_geometry(cam1_p2d, cam2_p2d, F)
+    _, _, c1, c2 = compute_epipolar_geometry(cam1_p2d, cam2_p2d, F_computed)
     margins = ((-400, 300), (1, 400))
     show_epipolar_lines(ax1, ax2, c1, c2, margins, color='b')
     # ep1, ep2 = np.array([-300,200,1]), np.array([200,50,1]) # These are dummy values for the epipoles just for illustrating. You have to compute them
